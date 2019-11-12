@@ -1,0 +1,172 @@
+---
+title: "e1-data-analyses"
+output: html_document
+---
+
+## Notes
+
+This markdown document contains the analysis codes associated with the results and figures reported in Experiment 1 of the paper which examined original photographs of males and females with low, mid-range, or high levels of autistic traits. 
+
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(dplyr)
+library(lmerTest)
+library(ggplot2)
+library(psych)
+```
+
+```{r data import, include=FALSE}
+## LAQ = 1, MAQ = 2, HAQ = 3
+
+## import data for male original faces
+dataMorg <- read_csv(here::here("Data","e1_masRatings.csv")) 
+
+## import data for female original faces
+dataForg <- read_csv(here::here("Data","e1_femRatings.csv")) 
+
+```
+
+```{r reliability analyses}
+## item-rest correlation analyses to identify raters with inconsistent ratings using r < .20 as cut-off. 
+
+femorg <- select(dataForg, 8:48)
+alpha(femorg)
+ICC(femorg) # reported ICC2k average random raters
+
+masorg <- select(dataMorg, 8:48)
+alpha(masorg)
+ICC(masorg) # reported ICC2k average random raters
+
+# all raters had item-rest correlation >.20 so none removed.
+
+```
+
+```{r data re-shaping for LME}
+## convert data frame into long format for LME
+
+dataMorg_long <- gather(dataMorg, "RaterID", "mascRating", 8:48)
+dataForg_long <- gather(dataForg, "RaterID", "femRating", 8:48)
+
+```
+
+```{r LME models: AQ scores and masculinity/femininity ratings}
+## female stimuli
+## AQ as predictor and femininity ratings as outcome
+
+# LME: random intercept only (linear AQ term)
+femorg_lme1 <- lmer(femRating ~ aqScore + (1|RaterID), REML = FALSE, data = dataForg_long)
+summary(femorg_lme1) 
+
+## male stimuli
+## AQ as predictor and femininity ratings as outcome
+
+# LME: random intercept only (linear AQ term)
+mascorg_lme1 <- lmer(mascRating ~ aqScore + (1|RaterID), REML = FALSE, data = dataMorg_long)
+summary(mascorg_lme1)
+
+# LME: random intercept only (linear + quadratic AQ term)
+dataMorg_long$aqScoreSq <- (dataMorg_long$aqScore)^2 # create squared AQ
+
+mascorg_lme2 <- lmer(mascRating ~ aqScore + aqScoreSq + (1|RaterID), REML = FALSE, data = dataMorg_long)
+summary(mascorg_lme2)
+
+```
+
+```{r linear regression: AQ scores and morphological masculinity scores}
+## female stimuli
+## AQ as predictor and morphological masculinity score (zfaceMasc) as outcome
+
+femobj_regr <- lm(zfaceMasc ~ aqScore, data = dataForg)
+summary(femobj_regr)
+
+## male stimuli
+## AQ as predictor and morphological masculinity score (zfaceMasc) as outcome
+
+masobj_regr <- lm(zfaceMasc ~ aqScore,data = dataMorg)
+summary(masobj_regr)
+
+```
+
+```{r linear regression: Masculinity/femininity ratings and morphological masculinity scores}
+
+## female stimuli
+## morphological masculinity scores (zfaceMasc) as predictor and femininity ratings as outcome
+
+femobjsubj_regr <- lm(aveRating ~ zfaceMasc, data = dataForg)
+summary(femobjsubj_regr)
+
+## male stimuli
+## morphological masculinity scores (zfaceMasc) as predictor and masculinity ratings as outcome
+
+masobjsubj_regr <- lm(aveRating ~ zfaceMasc, data = dataMorg)
+summary(masobjsubj_regr)
+```
+
+```{r figures}
+
+## Figure 2 left panel (femininity ratings)
+femorgplot <- ggplot(data = dataForg_long, aes(x = aqScore, y = femRating)) + 
+  geom_point(aes(group = RaterID), size = 1, alpha = 0.4) +
+  geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  stat_summary(fun.y = mean, geom="point", shape = 21, size = 2.5, stroke = 1.2, colour = 'black', fill = 'blue') + 
+  labs(x = "AQ Scores", y = "Femininity Ratings") +
+  ylim(0,10) +
+  xlim(1,45)
+
+print(femorgplot)
+
+## Figure 2 right panel (masculinity ratings)
+masorgplot <- ggplot(data = dataMorg_long, aes(x = aqScore, y = mascRating)) + 
+  geom_point(aes(group = RaterID), size = 1, alpha = 0.4) +
+  stat_smooth(method = "lm", formula = y ~ x + I(x^2), size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  stat_summary(fun.y = mean, geom="point", shape = 21, size = 2.5, stroke = 1.2, colour = 'black', fill = 'blue') + 
+  labs(x = "AQ Scores", y = "Masculinity Ratings") +
+  ylim(0,10) +
+  xlim(1,45)
+
+print(masorgplot)
+
+fig2 <- ggpubr::ggarrange(femorgplot, masorgplot)
+print(fig2)
+
+## Save Figure 2
+ggsave("Fig2.jpeg", 
+       fig2, 
+       dpi = 300,
+       units = "in",
+       width = 6.57,
+       height = 3.67)
+
+## Figure 3 left panel (MMS for females)
+femscoreplot <- ggplot(data = dataForg, aes(x = aqScore, y = zfaceMasc)) +
+  geom_point(size = 1.5, alpha = 0.3) +
+  geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  labs(x = "AQ Scores", y = "Morphological Masculinity Scores", title = "Females") +
+  ylim(-3,3) +
+  xlim(1,45)
+
+print(femscoreplot)
+
+## Figure 3 right panel (MMS for males)
+mascscoreplot <- ggplot(data = dataMorg, aes(x = aqScore, y = zfaceMasc)) +
+  geom_point(size = 1.5, alpha = 0.3) +
+  geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  labs(x = "AQ Scores", y = "Morphological Masculinity Scores", title = "Males") +
+  ylim(-3,3)+
+  xlim(1,45)
+
+print(mascscoreplot)
+
+fig3 <- ggpubr::ggarrange(femscoreplot, mascscoreplot)
+print(fig3)
+
+## Save Figure 3
+ggsave("Fig3.jpeg", 
+       fig3, 
+       dpi = 300,
+       units = "in",
+       width = 6.57,
+       height = 3.67)
+
+```

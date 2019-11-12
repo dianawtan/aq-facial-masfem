@@ -1,0 +1,256 @@
+---
+title: "01. Data wrangling"
+author: "Diana Tan"
+date: "8/12/2019"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(dplyr)
+library(here)
+library(lmerTest)
+library(ggplot2)
+library(psych)
+
+```
+
+```{r data import, include = FALSE}
+## LAQ = 1, MAQ = 2, HAQ = 3
+
+dataMorg <- read.csv(here("Data","e1_mascRatings.csv")) 
+dataForg <- read.csv(here("Data","e1_femRatings.csv")) %>%
+  rename(StimPpt = ï..StimPpt)
+
+dataMcom <- read.csv(here("Data", "e2_mascRatings.csv")) %>%
+  rename(stimulus = ï..Stimulus)
+dataFcom <- read.csv(here("Data", "e2_femRatings.csv")) %>%
+  rename(stimulus = ï..Stimulus)
+
+```
+
+```{r reliability analyses}
+#item-rest correlation using r = .20 as a cut-off
+femorg <- select(dataForg, 8:48)
+masorg <- select(dataMorg, 8:48)
+
+alpha(femorg)
+alpha(masorg)
+ICC(femorg)
+ICC(masorg)
+
+femcomp <- select(dataFcom, 4:39)
+mascomp <- select(dataMcom, 4:39)
+
+alpha(femcomp)
+alpha(mascomp)
+
+```
+
+```{r data wrangling}
+##convert data into long format for LME
+
+# all raters had item-rest correlation >.30 so none removed.
+dataMorg_long <- gather(dataMorg, "RaterID", "mascRating", 8:48)
+dataForg_long <- gather(dataForg, "RaterID", "femRating", 8:48)
+
+# 11 raters with item-rest correlation <.20 were removed. 
+dataMcom <- select(dataMcom, c(1:3,4:13,16:17,19,21,24:28,30,33,35,37:39))
+
+dataMcom_long <- gather(dataMcom, "RaterID", "mascRating",4:28)
+
+# 10 raters with item-rest correlation <.20 were removed.
+dataFcom <- select(dataFcom, c(1:3,4:10,13:18,21,24,26:30,33:38))
+dataFcom_long <- gather(dataFcom, "RaterID", "femRating", 4:29)
+
+# post-removal reliability analyses
+dataMcom_rating <- select(dataMcom, -1:-3)
+alpha(dataMcom_rating)
+ICC(dataMcom_rating)
+
+dataFcom_rating <- select(dataFcom, -1:-3)
+alpha(dataFcom_rating)
+ICC(dataFcom_rating)
+
+```
+
+```{r LME models}
+##### original faces #####
+## femininity scores ##
+
+# linear regression
+femorg_regr <- lm(aveRating ~ Aqscore, data = dataForg)
+summary(femorg_regr)
+
+# LME: random intercept only
+femorg_lme1 <- lmer(femRating ~ Aqscore + (1|RaterID), REML = FALSE, data = dataForg_long)
+summary(femorg_lme1) 
+
+# LME: random intercept and slope
+# singular fit, model is overfitted
+
+## masculinity scores ##
+
+# linear regression
+mascorg_regr <- lm(aveRating ~ Aqscore, data = dataMorg)
+summary(mascorg_regr)
+
+# LME: random intercept only (linear AQ term)
+mascorg_lme1 <- lmer(mascRating ~ Aqscore + (1|RaterID), REML = FALSE, data = dataMorg_long)
+summary(mascorg_lme1)
+
+# LME: random intercept only (linear + quadratic AQ term) -- justify adding quadratic term
+dataMorg_long$polyAqscore <- (dataMorg_long$Aqscore)^2
+
+mascorg_lme2 <- lmer(mascRating ~ Aqscore + polyAqscore + (1|RaterID), REML = FALSE, data = dataMorg_long)
+summary(mascorg_lme2)
+
+# random intercept and slope
+# singular fit, model over fit
+
+#visualisation
+
+femorgplot <- ggplot(data = dataForg_long, aes(x = Aqscore, y = femRating)) + 
+  geom_point(aes(group = RaterID), size = 1, alpha = 0.4) +
+  geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  stat_summary(fun.y = mean, geom="point", shape = 21, size = 2.5, stroke = 1.2, colour = 'black', fill = 'blue') + 
+  labs(x = "AQ Scores", y = "Femininity Ratings") +
+  ylim(0,10) +
+  xlim(1,45)
+
+print(femorgplot)
+
+mascorgplot <- ggplot(data = dataMorg_long, aes(x = Aqscore, y = mascRating)) + 
+  geom_point(aes(group = RaterID), size = 1, alpha = 0.4) +
+  stat_smooth(method = "lm", formula = y ~ x + I(x^2), size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  stat_summary(fun.y = mean, geom="point", shape = 21, size = 2.5, stroke = 1.2, colour = 'black', fill = 'blue') + 
+  labs(x = "AQ Scores", y = "Masculinity Ratings") +
+  ylim(0,10) +
+  xlim(1,45)
+
+print(mascorgplot)
+
+fig2 <- ggpubr::ggarrange(femorgplot, mascorgplot)
+print(fig2)
+
+ggsave("fig2.jpeg", 
+       fig2, 
+       dpi = 300,
+       units = "in",
+       width = 6.57,
+       height = 3.67)
+
+##### composite faces #####
+## femininity scores ##
+
+# linear regression
+femcom_regr <- lm(femRating ~ meanAQscore, data = dataFcom_long)
+summary(femcom_regr)
+
+# LME: random intercept only (linear term only)
+femcom_lme1 <- lmer(femRating ~ meanAQscore + (1|RaterID), REML = FALSE, data = dataFcom_long)
+summary(femcom_lme1) 
+
+# LME: random intercept and slope
+# singular fit, model is overfitted
+
+## masculinity scores ##
+
+# linear regression
+masccom_regr <- lm(mascRating ~ meanAQscore, data = dataMcom_long)
+summary(masccom_regr)
+
+# LME: random intercept only (linear AQ term)
+masccom_lme1 <- lmer(mascRating ~ meanAQscore + (1|RaterID), REML = FALSE, data = dataMcom_long)
+summary(masccom_lme1)
+
+# LME: random intercept only (linear + quadratic AQ term)
+dataMcom_long$polyAqscore <- (dataMcom_long$meanAQscore)^2
+
+masccom_lme2 <- lmer(mascRating ~ meanAQscore + polyAqscore + (1|RaterID), REML = FALSE, data = dataMcom_long)
+summary(masccom_lme2)
+
+# random intercept and slope
+# singular fit, model over fit
+
+#visualisation
+femcomplot <- ggplot(data = dataFcom_long, aes(x = meanAQscore, y = femRating)) + 
+  geom_point(aes(group = RaterID), size = 1, alpha = 0.4) +
+  geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  stat_summary(fun.y = mean, geom="point", shape = 21, size = 2.5, stroke = 1.2, colour = 'black', fill = 'blue') + 
+  labs(x = "AQ Scores", y = "Femininity Ratings") +
+  ylim(0,10) +
+  xlim(1,30)
+
+print(femcomplot)
+
+masccomplot <- ggplot(data = dataMcom_long, aes(x = meanAQscore, y = mascRating)) + 
+  geom_point(aes(group = RaterID), size = 1, alpha = 0.4) +
+  stat_smooth(method = "lm", formula = y ~ x + I(x^2), size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  stat_summary(fun.y = mean, geom="point", shape = 21, size = 2.5, stroke = 1.2, colour = 'black', fill = 'blue') + 
+  labs(x = "AQ Scores", y = "Masculinity Ratings") +
+  ylim(0,10) +
+  xlim(1,30)
+
+print(masccomplot)
+
+fig4 <- ggpubr::ggarrange(femcomplot, masccomplot)
+print(fig4)
+
+ggsave("fig4.jpeg", 
+       fig4, 
+       dpi = 300,
+       units = "in",
+       width = 6.57,
+       height = 3.67)
+
+```
+
+```{r objective measurements}
+describeBy(dataMorg$zfaceMasc, group = dataMorg$AQ_group)
+describeBy(dataForg$zfaceMasc, group = dataForg$AQ_group)
+
+masobj_regr <- lm(zfaceMasc ~ Aqscore,data = dataMorg)
+summary(masobj_regr)
+
+femobj_regr <- lm(zfaceMasc ~ Aqscore, data = dataForg)
+summary(femobj_regr)
+
+masobjsubj_regr <- lm(aveRating ~ zfaceMasc, data = dataMorg)
+summary(masobjsubj_regr)
+
+femobjsubj_regr <- lm(aveRating ~ zfaceMasc, data = dataForg)
+summary(femobjsubj_regr)
+
+#graphs
+femscoreplot <- ggplot(data = dataForg, aes(x = Aqscore, y = zfaceMasc)) +
+  geom_point(size = 1.5, alpha = 0.3) +
+  geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  labs(x = "AQ Scores", y = "Morphological Masculinity Scores", title = "Females") +
+  ylim(-3,3) +
+  xlim(1,45)
+
+print(femscoreplot)
+
+mascscoreplot <- ggplot(data = dataMorg, aes(x = Aqscore, y = zfaceMasc)) +
+  geom_point(size = 1.5, alpha = 0.3) +
+  geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  labs(x = "AQ Scores", y = "Morphological Masculinity Scores", title = "Males") +
+  ylim(-3,3)+
+  xlim(1,45)
+
+print(mascscoreplot)
+
+fig3 <- ggpubr::ggarrange(femscoreplot, mascscoreplot)
+print(fig3)
+
+ggsave("Fig3.jpeg", 
+       fig3, 
+       dpi = 300,
+       units = "in",
+       width = 6.57,
+       height = 3.67)
+
+```
+
+

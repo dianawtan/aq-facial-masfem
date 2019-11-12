@@ -1,0 +1,122 @@
+---
+title: "e2-data-analyses"
+output: html_document
+---
+
+## Notes
+
+This markdown document contains the analysis codes associated with the results and figures reported in Experiment 2 of the paper which examined composite images of males and females with low, mid-range, or high levels of autistic traits. 
+
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(dplyr)
+library(lmerTest)
+library(ggplot2)
+library(psych)
+```
+
+```{r data import, include=FALSE}
+## LAQ = 1, MAQ = 2, HAQ = 3
+
+## import data for male composite faces
+dataMcom <- read_csv(here::here("Data","e2_masRatings.csv")) 
+
+## import data for female composite faces
+dataFcom <- read_csv(here::here("Data","e2_femRatings.csv")) 
+```
+
+```{r reliability analyses}
+## item-rest correlation analyses to identify raters with inconsistent ratings using r < .20 as cut-off. 
+
+femcom <- select(dataFcom, 4:39)
+alpha(femcom)
+
+# 10 raters with item-rest correlation <.20 to be removed.
+dataFcom <- select(dataFcom, c(1:3,4:10,13:18,21,24,26:30,33:38))
+
+
+mascom <- select(dataMcom, 4:39)
+alpha(mascom)
+
+# 11 raters with item-rest correlation <.20 to be removed. 
+dataMcom <- select(dataMcom, c(1:3,4:13,16:17,19,21,24:28,30,33,35,37:39))
+
+```
+
+```{r data re-shaping for LME}
+## convert data frame into long format for LME
+
+dataFcom_long <- gather(dataFcom, "RaterID", "femRating", 4:29)
+dataMcom_long <- gather(dataMcom, "RaterID", "masRating", 4:28)
+
+## post-removal reliability analyses
+
+dataFcom1 <- select(dataFcom, -1:-3)
+alpha(dataFcom1)
+ICC(dataFcom1) # reported ICC2k
+
+dataMcom1 <- select(dataMcom, -1:-3)
+alpha(dataMcom1)
+ICC(dataMcom1) #reported ICC2k
+
+```
+
+```{r LME models: AQ scores and masculinity/femininity ratings}
+## female stimuli
+## AQ as predictor and femininity ratings as outcome
+
+# LME: random intercept only (linear AQ term)
+femcom_lme1 <- lmer(femRating ~ meanAQscore + (1|RaterID), REML = FALSE, data = dataFcom_long)
+summary(femcom_lme1)
+
+## male stimuli
+## AQ as predictor and femininity ratings as outcome
+
+# LME: random intercept only (linear AQ term)
+mascom_lme1 <- lmer(masRating ~ meanAQscore + (1|RaterID), REML = FALSE, data = dataMcom_long)
+summary(mascom_lme1)
+
+# LME: random intercept only (linear + quadratic AQ term)
+dataMcom_long$aqScoreSq <- (dataMcom_long$meanAQscore)^2 # create squared AQ
+
+mascom_lme2 <- lmer(masRating ~ meanAQscore + aqScoreSq + (1|RaterID), REML = FALSE, data = dataMcom_long)
+summary(mascom_lme2)
+
+```
+
+```{r figures}
+## Figure 4 left panel (femininty ratings)
+femcomplot <- ggplot(data = dataFcom_long, aes(x = meanAQscore, y = femRating)) + 
+  geom_point(aes(group = RaterID), size = 1, alpha = 0.4) +
+  geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  stat_summary(fun.y = mean, geom="point", shape = 21, size = 2.5, stroke = 1.2, colour = 'black', fill = 'blue') + 
+  labs(x = "AQ Scores", y = "Femininity Ratings") +
+  ylim(0,10) +
+  xlim(1,30)
+
+print(femcomplot)
+
+## Figure 4 right panel (masculinity ratings)
+masccomplot <- ggplot(data = dataMcom_long, aes(x = meanAQscore, y = mascRating)) + 
+  geom_point(aes(group = RaterID), size = 1, alpha = 0.4) +
+  stat_smooth(method = "lm", formula = y ~ x + I(x^2), size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
+  stat_summary(fun.y = mean, geom="point", shape = 21, size = 2.5, stroke = 1.2, colour = 'black', fill = 'blue') + 
+  labs(x = "AQ Scores", y = "Masculinity Ratings") +
+  ylim(0,10) +
+  xlim(1,30)
+
+print(masccomplot)
+
+fig4 <- ggpubr::ggarrange(femcomplot, masccomplot)
+print(fig4)
+
+## Save Figure 4
+ggsave("Fig4.jpeg", 
+       fig4, 
+       dpi = 300,
+       units = "in",
+       width = 6.57,
+       height = 3.67)
+
+```

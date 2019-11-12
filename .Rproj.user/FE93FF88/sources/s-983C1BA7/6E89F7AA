@@ -1,0 +1,33 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1570594307589.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "6E89F7AA",
+    "lastKnownWriteTime" : 32088628386725934,
+    "last_content_update" : 1570594307589,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "632F2CC4",
+        "caption" : "dataForg_long",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=dataForg_long&cache_key=632F2CC4",
+        "displayedObservations" : 3321,
+        "environment" : "",
+        "expression" : "dataForg_long",
+        "object" : "dataForg_long",
+        "preview" : 0,
+        "totalObservations" : 3321,
+        "variables" : 9
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

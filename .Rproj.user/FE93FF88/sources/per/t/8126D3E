@@ -1,0 +1,33 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1570693225371.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "8126D3E",
+    "lastKnownWriteTime" : 2668066458952,
+    "last_content_update" : 1570693225371,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "70B58431",
+        "caption" : "dataMorg",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=dataMorg&cache_key=70B58431",
+        "displayedObservations" : 70,
+        "environment" : "",
+        "expression" : "dataMorg",
+        "object" : "dataMorg",
+        "preview" : 0,
+        "totalObservations" : 70,
+        "variables" : 49
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}
