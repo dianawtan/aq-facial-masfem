@@ -1,7 +1,0 @@
-"0","```r
-Tanprepcomp_data_M <- filter(Tanprepcomp_data, Sex == \"Males\")
-
-```"
-"1","Error in filter(Tanprepcomp_data, Sex == \"Males\") : 
-  object 'Tanprepcomp_data' not found
-"

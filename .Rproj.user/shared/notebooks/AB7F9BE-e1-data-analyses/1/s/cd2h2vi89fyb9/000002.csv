@@ -1,5 +1,0 @@
-"0","## convert data frame into long format for LME"
-"0",""
-"0","dataMorg_long <- gather(dataMorg, ""RaterID"", ""mascRating"", 8:48)"
-"0","dataForg_long <- gather(dataForg, ""RaterID"", ""femRating"", 8:48)"
-"0",""
