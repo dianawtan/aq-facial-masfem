@@ -98,7 +98,7 @@ femcomplot <- ggplot(data = dataFcom_long, aes(x = meanAQscore, y = femRating)) 
 print(femcomplot)
 
 ## Figure 4 right panel (masculinity ratings)
-masccomplot <- ggplot(data = dataMcom_long, aes(x = meanAQscore, y = mascRating)) + 
+masccomplot <- ggplot(data = dataMcom_long, aes(x = meanAQscore, y = masRating)) + 
   geom_point(aes(group = RaterID), size = 1, alpha = 0.4) +
   stat_smooth(method = "lm", formula = y ~ x + I(x^2), size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
   stat_summary(fun.y = mean, geom="point", shape = 21, size = 2.5, stroke = 1.2, colour = 'black', fill = 'blue') + 
@@ -114,7 +114,7 @@ print(fig4)
 ## Save Figure 4
 ggsave("Fig4.jpeg", 
        fig4, 
-       dpi = 300,
+       dpi = 800,
        units = "in",
        width = 6.57,
        height = 3.67)

@@ -133,7 +133,7 @@ print(fig2)
 ## Save Figure 2
 ggsave("Fig2.jpeg", 
        fig2, 
-       dpi = 300,
+       dpi = 800,
        units = "in",
        width = 6.57,
        height = 3.67)
@@ -164,7 +164,7 @@ print(fig3)
 ## Save Figure 3
 ggsave("Fig3.jpeg", 
        fig3, 
-       dpi = 300,
+       dpi = 800,
        units = "in",
        width = 6.57,
        height = 3.67)
