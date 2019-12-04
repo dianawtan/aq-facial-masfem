@@ -8,37 +8,62 @@ output: html_document
 This markdown document contains the analysis codes associated with the results and figures reported in Experiment 1 of the paper which examined original photographs of males and females with low, mid-range, or high levels of autistic traits. 
 
 
-```{r setup, include = FALSE}
-library(tidyverse)
-library(dplyr)
-library(lmerTest)
-library(ggplot2)
-library(psych)
+```{r setup, echo=FALSE, message=FALSE, warning=TRUE}
+## install and load required packages
+
+pkgToAttach <- 
+  c("tidyverse",  # dplyr, readr, etc.
+    "lmerTest",  # linear mixed effects
+    "ggplot2",  # plots
+    "psych",  # reliability analyses
+    "here"  # relative paths
+    )
+
+invisible(lapply(pkgToAttach, function (pkg) {
+  if (!pkg %in% installed.packages()) {  # if package is not installed, install & attach it
+    cat("Required package", pkg, "missing. Attempting to install now.\n\n")
+    install.packages(pkg, dependencies = TRUE, quiet = TRUE)
+    cat("Package installed:", pkg, "\n\n")
+  }
+  
+  library(pkg, character.only = TRUE, quiet = TRUE)
+  cat("Package attached:", pkg, "\n\n")
+  
+}))
+
+rm(pkgToAttach)  # clean up
 ```
 
-```{r data import, include=FALSE}
+```{r data-import, echo=FALSE, message=FALSE, warning=TRUE}
 ## LAQ = 1, MAQ = 2, HAQ = 3
 
-## import data for male original faces
-dataMorg <- read_csv(here::here("Data","e1_masRatings.csv")) 
-
-## import data for female original faces
-dataForg <- read_csv(here::here("Data","e1_femRatings.csv")) 
+## import data
+dataMorg <- read_csv(here("Data","e1_masRatings.csv"))  # for male original faces
+dataForg <- read_csv(here("Data","e1_femRatings.csv"))  # for female original faces
 
 ```
 
-```{r reliability analyses}
+```{r reliability-analyses}
 ## item-rest correlation analyses to identify raters with inconsistent ratings using r < .20 as cut-off. 
 
-femorg <- select(dataForg, 8:48)
-alpha(femorg)
-ICC(femorg) # reported ICC2k average random raters
+## female faces
+femorg <- select(dataForg, starts_with("Rater"), one_of("aveRating"))  # select rater scores and average ratings
+ICC(femorg)  # reported ICC2k average random raters
 
-masorg <- select(dataMorg, 8:48)
-alpha(masorg)
-ICC(masorg) # reported ICC2k average random raters
+alpha1 <- alpha(femorg) #%>%  # calculate Cronbach's alpha  >> ************* IS THIS USED??
+rownames(alpha1[["item.stats"]])
+filter(alpha1[["item.stats"]], "r.col"  > .20)
 
-# all raters had item-rest correlation >.20 so none removed.
+
+## male faces
+masorg <- select(dataMorg, starts_with("Rater"), one_of("aveRating"))  # select rater scores and average ratings
+ICC(masorg)  # reported ICC2k average random raters
+
+alpha(masorg) %>%  # calculate Cronbach's alpha  >> ************* IS THIS USED??
+  filter(., "r.col" < .20) %>% 
+  glimpse
+
+# all raters had item-rest correlation >= .20 so none removed.
 
 ```
 
