@@ -1,11 +1,11 @@
 ---
-title: "e1-data-analyses"
+title: "Data Analyses for Experiment 1"
 output: html_document
 ---
 
 ## Notes
 
-This markdown document contains the analysis codes associated with the results and figures reported in Experiment 1 of the paper which examined original photographs of males and females with low, mid-range, or high levels of autistic traits. 
+This markdown document contains the analyses associated with the results and figures reported in Experiment 1 of the paper which examined original photographs of males and females with low, mid-range, or high levels of autistic traits.
 
 
 ```{r setup, echo=FALSE, message=FALSE, warning=TRUE}
@@ -16,25 +16,27 @@ pkgToAttach <-
     "lmerTest",  # linear mixed effects
     "ggplot2",  # plots
     "psych",  # reliability analyses
-    "here"  # relative paths
+    "here",  # relative paths
+    "ggpubr"
     )
 
 invisible(lapply(pkgToAttach, function (pkg) {
   if (!pkg %in% installed.packages()) {  # if package is not installed, install & attach it
     cat("Required package", pkg, "missing. Attempting to install now.\n\n")
     install.packages(pkg, dependencies = TRUE, quiet = TRUE)
-    cat("Package installed:", pkg, "\n\n")
+    cat("Package installed:", pkg, "\n")
   }
   
   library(pkg, character.only = TRUE, quiet = TRUE)
-  cat("Package attached:", pkg, "\n\n")
+  cat("Package attached:", pkg, "\n")
   
 }))
 
 rm(pkgToAttach)  # clean up
 ```
 
-```{r data-import}
+### Importing Data
+```{r data-import, echo=FALSE, message=FALSE, warning=TRUE}
 ## LAQ = 1, MAQ = 2, HAQ = 3
 
 ## import data
@@ -42,8 +44,10 @@ dataMorg <- read_csv(here("Data","e1_masRatings.csv"))  # for male original face
 dataForg <- read_csv(here("Data","e1_femRatings.csv"))  # for female original faces
 
 ```
+There are a total of `r nrow(dataMorg)` male faces and `r nrow(dataForg)` female faces.
 
-```{r reliability-analyses}
+### Reliability Analyses and Data Cleaning
+```{r reliability-analyses, echo=FALSE, message=FALSE, warning=TRUE}
 ## item-rest correlation analyses to identify raters with inconsistent ratings using r < .20 as cut-off. 
 
 ## female faces
@@ -79,15 +83,17 @@ masRatersToRemove  <-
 dataMorgCleaned <-
   select(dataMorg, -one_of(masRatersToRemove))
 
-rm(alphaFem, alphaMas, femorg, masorg, dataForg, dataMorg,
-   femRatersToRemove, masRatersToRemove)
+rm(alphaFem, alphaMas, femorg, masorg, dataForg, dataMorg)  # clean up
 ```
+Raters are removed from further analyses if their item-rest correlation was < .20
+`r length(femRatersToRemove)` raters (female faces) and `r length(masRatersToRemove)` raters (male faces) were removed.
 
+### LME Analyses
 ```{r data re-shaping for LME}
 ## convert data frame into long format for LME
 
-dataMorg_long <- gather(dataMorg, "RaterID", "mascRating", 8:48)
-dataForg_long <- gather(dataForg, "RaterID", "femRating", 8:48)
+dataMorg_long <- gather(dataMorgCleaned, "RaterID", "mascRating", 8:48)
+dataForg_long <- gather(dataForgCleaned, "RaterID", "femRating", 8:48)
 
 ```
 
@@ -118,13 +124,13 @@ summary(mascorg_lme2)
 ## female stimuli
 ## AQ as predictor and morphological masculinity score (zfaceMasc) as outcome
 
-femobj_regr <- lm(zfaceMasc ~ aqScore, data = dataForg)
+femobj_regr <- lm(zfaceMasc ~ aqScore, data = dataForgCleaned)
 summary(femobj_regr)
 
 ## male stimuli
 ## AQ as predictor and morphological masculinity score (zfaceMasc) as outcome
 
-masobj_regr <- lm(zfaceMasc ~ aqScore,data = dataMorg)
+masobj_regr <- lm(zfaceMasc ~ aqScore,data = dataMorgCleaned)
 summary(masobj_regr)
 
 ```
@@ -134,13 +140,13 @@ summary(masobj_regr)
 ## female stimuli
 ## morphological masculinity scores (zfaceMasc) as predictor and femininity ratings as outcome
 
-femobjsubj_regr <- lm(aveRating ~ zfaceMasc, data = dataForg)
+femobjsubj_regr <- lm(aveRating ~ zfaceMasc, data = dataForgCleaned)
 summary(femobjsubj_regr)
 
 ## male stimuli
 ## morphological masculinity scores (zfaceMasc) as predictor and masculinity ratings as outcome
 
-masobjsubj_regr <- lm(aveRating ~ zfaceMasc, data = dataMorg)
+masobjsubj_regr <- lm(aveRating ~ zfaceMasc, data = dataMorgCleaned)
 summary(masobjsubj_regr)
 ```
 
@@ -180,7 +186,7 @@ ggsave("Fig2.jpeg",
        height = 3.67)
 
 ## Figure 3 left panel (MMS for females)
-femscoreplot <- ggplot(data = dataForg, aes(x = aqScore, y = zfaceMasc)) +
+femscoreplot <- ggplot(data = dataForgCleaned, aes(x = aqScore, y = zfaceMasc)) +
   geom_point(size = 1.5, alpha = 0.3) +
   geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
   labs(x = "AQ Scores", y = "Morphological Masculinity Scores", title = "Females") +
@@ -190,7 +196,7 @@ femscoreplot <- ggplot(data = dataForg, aes(x = aqScore, y = zfaceMasc)) +
 print(femscoreplot)
 
 ## Figure 3 right panel (MMS for males)
-mascscoreplot <- ggplot(data = dataMorg, aes(x = aqScore, y = zfaceMasc)) +
+mascscoreplot <- ggplot(data = dataMorgCleaned, aes(x = aqScore, y = zfaceMasc)) +
   geom_point(size = 1.5, alpha = 0.3) +
   geom_smooth(method = "lm", size = 1, colour = 'red', fill = 'red', alpha = 0.3) +
   labs(x = "AQ Scores", y = "Morphological Masculinity Scores", title = "Males") +
