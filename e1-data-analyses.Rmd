@@ -34,7 +34,7 @@ invisible(lapply(pkgToAttach, function (pkg) {
 rm(pkgToAttach)  # clean up
 ```
 
-```{r data-import, echo=FALSE, message=FALSE, warning=TRUE}
+```{r data-import}
 ## LAQ = 1, MAQ = 2, HAQ = 3
 
 ## import data
@@ -50,21 +50,37 @@ dataForg <- read_csv(here("Data","e1_femRatings.csv"))  # for female original fa
 femorg <- select(dataForg, starts_with("Rater"), one_of("aveRating"))  # select rater scores and average ratings
 ICC(femorg)  # reported ICC2k average random raters
 
-alpha1 <- alpha(femorg) #%>%  # calculate Cronbach's alpha  >> ************* IS THIS USED??
-rownames(alpha1[["item.stats"]])
-filter(alpha1[["item.stats"]], "r.col"  > .20)
+# calc alpha and remove raters with item-rest correlation r < .20
+alphaFem <- alpha(femorg)
+
+femRatersToRemove  <- 
+  alphaFem[["item.stats"]] %>% 
+  rownames_to_column(., var = "Rater") %>% 
+  filter(., r.cor < .20) %>%
+  pull(., Rater)
+
+dataForgCleaned <-
+  select(dataForg, -one_of(femRatersToRemove))
 
 
 ## male faces
 masorg <- select(dataMorg, starts_with("Rater"), one_of("aveRating"))  # select rater scores and average ratings
 ICC(masorg)  # reported ICC2k average random raters
 
-alpha(masorg) %>%  # calculate Cronbach's alpha  >> ************* IS THIS USED??
-  filter(., "r.col" < .20) %>% 
-  glimpse
+# calc alpha and remove those with item-rest correlation r < .20
+alphaMas <- alpha(masorg)
 
-# all raters had item-rest correlation >= .20 so none removed.
+masRatersToRemove  <- 
+  alphaMas[["item.stats"]] %>% 
+  rownames_to_column(., var = "Rater") %>% 
+  filter(., r.cor < .20) %>%
+  pull(., Rater)
 
+dataMorgCleaned <-
+  select(dataMorg, -one_of(masRatersToRemove))
+
+rm(alphaFem, alphaMas, femorg, masorg, dataForg, dataMorg,
+   femRatersToRemove, masRatersToRemove)
 ```
 
 ```{r data re-shaping for LME}
