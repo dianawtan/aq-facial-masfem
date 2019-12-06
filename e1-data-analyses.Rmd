@@ -51,7 +51,7 @@ There are a total of `r nrow(dataMorg)` male faces and `r nrow(dataForg)` female
 ## item-rest correlation analyses to identify raters with inconsistent ratings using r < .20 as cut-off. 
 
 ## female faces
-femorg <- select(dataForg, starts_with("Rater"), one_of("aveRating"))  # select rater scores and average ratings
+femorg <- select(dataForg, starts_with("Rater"))  # select rater scores
 ICC(femorg)  # reported ICC2k average random raters
 
 # calc alpha and remove raters with item-rest correlation r < .20
@@ -68,7 +68,7 @@ dataForgCleaned <-
 
 
 ## male faces
-masorg <- select(dataMorg, starts_with("Rater"), one_of("aveRating"))  # select rater scores and average ratings
+masorg <- select(dataMorg, starts_with("Rater"))  # select rater scores
 ICC(masorg)  # reported ICC2k average random raters
 
 # calc alpha and remove those with item-rest correlation r < .20
