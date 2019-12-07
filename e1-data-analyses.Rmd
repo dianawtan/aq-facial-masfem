@@ -8,6 +8,7 @@ output: html_document
 This markdown document contains the analyses associated with the results and figures reported in Experiment 1 of the paper which examined original photographs of males and females with low, mid-range, or high levels of autistic traits.
 
 
+### Install (if necessary) and load packages
 ```{r setup, echo=FALSE, message=FALSE, warning=TRUE}
 ## install and load required packages
 
@@ -35,6 +36,7 @@ invisible(lapply(pkgToAttach, function (pkg) {
 rm(pkgToAttach)  # clean up
 ```
 
+
 ### Importing Data
 ```{r data-import, echo=FALSE, message=FALSE, warning=TRUE}
 ## LAQ = 1, MAQ = 2, HAQ = 3
@@ -46,13 +48,16 @@ dataForg <- read_csv(here("Data","e1_femRatings.csv"))  # for female original fa
 ```
 There are a total of `r nrow(dataMorg)` male faces and `r nrow(dataForg)` female faces.
 
+
 ### Reliability Analyses and Data Cleaning
 ```{r reliability-analyses, echo=FALSE, message=FALSE, warning=TRUE}
 ## item-rest correlation analyses to identify raters with inconsistent ratings using r < .20 as cut-off. 
 
 ## female faces
 femorg <- select(dataForg, starts_with("Rater"))  # select rater scores
-ICC(femorg)  # reported ICC2k average random raters
+cat("ICC2k average random raters for FEMALE FACES:")
+ICC(femorg)$results %>%   # reported ICC2k average random raters
+  filter(., type == "ICC2k")
 
 # calc alpha and remove raters with item-rest correlation r < .20
 alphaFem <- alpha(femorg)
@@ -69,7 +74,9 @@ dataForgCleaned <-
 
 ## male faces
 masorg <- select(dataMorg, starts_with("Rater"))  # select rater scores
-ICC(masorg)  # reported ICC2k average random raters
+cat("ICC2k average random raters for MALE FACES:")
+ICC(masorg)$results %>%   # reported ICC2k average random raters
+  filter(., type == "ICC2k")
 
 # calc alpha and remove those with item-rest correlation r < .20
 alphaMas <- alpha(masorg)
@@ -85,11 +92,13 @@ dataMorgCleaned <-
 
 rm(alphaFem, alphaMas, femorg, masorg, dataForg, dataMorg)  # clean up
 ```
-Raters are removed from further analyses if their item-rest correlation was < .20
+Raters are removed from further analyses if their item-rest correlation was < .20.
+
 `r length(femRatersToRemove)` raters (female faces) and `r length(masRatersToRemove)` raters (male faces) were removed.
 
+
 ### LME Analyses
-```{r data re-shaping for LME}
+```{r data-reshape-lme, echo=FALSE, message=FALSE, warning=TRUE, include=FALSE}
 ## convert data frame into long format for LME
 
 dataMorg_long <- gather(dataMorgCleaned, "RaterID", "mascRating", 8:48)
@@ -97,7 +106,8 @@ dataForg_long <- gather(dataForgCleaned, "RaterID", "femRating", 8:48)
 
 ```
 
-```{r LME models: AQ scores and masculinity/femininity ratings}
+
+```{r LME models: AQ scores and masculinity/femininity ratings, echo=FALSE, message=FALSE, warning=TRUE, include=FALSE}
 ## female stimuli
 ## AQ as predictor and femininity ratings as outcome
 
@@ -120,7 +130,8 @@ summary(mascorg_lme2)
 
 ```
 
-```{r linear regression: AQ scores and morphological masculinity scores}
+
+```{r linear regression: AQ scores and morphological masculinity scores, echo=FALSE, message=FALSE, warning=TRUE, include=FALSE}
 ## female stimuli
 ## AQ as predictor and morphological masculinity score (zfaceMasc) as outcome
 
@@ -135,7 +146,8 @@ summary(masobj_regr)
 
 ```
 
-```{r linear regression: Masculinity/femininity ratings and morphological masculinity scores}
+
+```{r linear regression: Masculinity/femininity ratings and morphological masculinity scores, echo=FALSE, message=FALSE, warning=TRUE, include=FALSE}
 
 ## female stimuli
 ## morphological masculinity scores (zfaceMasc) as predictor and femininity ratings as outcome
@@ -150,7 +162,8 @@ masobjsubj_regr <- lm(aveRating ~ zfaceMasc, data = dataMorgCleaned)
 summary(masobjsubj_regr)
 ```
 
-```{r figures}
+
+```{r figures, echo=FALSE, message=FALSE, warning=TRUE, include=FALSE}
 
 ## Figure 2 left panel (femininity ratings)
 femorgplot <- ggplot(data = dataForg_long, aes(x = aqScore, y = femRating)) + 
@@ -217,3 +230,4 @@ ggsave("Fig3.jpeg",
        height = 3.67)
 
 ```
+
