@@ -100,14 +100,15 @@ Raters are removed from further analyses if their item-rest correlation was < .2
 ### LME Analyses
 ```{r data-reshape-lme, echo=FALSE, message=FALSE, warning=TRUE, include=FALSE}
 ## convert data frame into long format for LME
-
-dataMorg_long <- gather(dataMorgCleaned, "RaterID", "mascRating", 8:48)
-dataForg_long <- gather(dataForgCleaned, "RaterID", "femRating", 8:48)
+dataMorg_long <- gather(dataMorgCleaned, "RaterID", "mascRating", starts_with("Rater"))
+dataForg_long <- gather(dataForgCleaned, "RaterID", "femRating", starts_with("Rater"))
 
 ```
 
 
-```{r LME models: AQ scores and masculinity/femininity ratings, echo=FALSE, message=FALSE, warning=TRUE, include=FALSE}
+```{r lme-models, echo=FALSE, message=FALSE, warning=TRUE, include=FALSE}
+## LME models: AQ scores and masculinity/femininity ratings
+
 ## female stimuli
 ## AQ as predictor and femininity ratings as outcome
 
